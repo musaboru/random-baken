@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#17483b">
 <title>ランダム馬券メーカー｜非公式の買い目抽選ツール</title>
-<meta name="description" content="出走頭数・券種・点数・除外番号を指定して、重複しない馬券の買い目をランダムに生成する非公式の無料ツールです。馬券の購入はできません。">
+<meta name="description" content="出走頭数・券種・点数・除外番号・必ず入れる馬番を指定して、重複しない馬券の買い目をランダムに生成する非公式の無料ツールです。馬券の購入はできません。">
 <style>
 :root{--bg:#f5f7f3;--surface:#ffffff;--ink:#23362e;--muted:#687a70;--forest:#17483b;--forest2:#246451;--line:#dce6de;--pale:#eaf3ec;--error:#ad3434}
 *{box-sizing:border-box}
@@ -21,7 +21,7 @@ h1{font-size:clamp(23px,5.3vw,33px);line-height:1.4;margin:8px 0 10px;letter-spa
 .panel{padding:24px;border-radius:19px;background:var(--surface);border:1px solid #e5ece6;box-shadow:0 8px 28px rgba(20,60,35,.04);margin-bottom:16px}
 h2{font-size:17px;margin:0 0 20px}.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .field label{display:block;font-size:12px;font-weight:750;margin-bottom:8px}
-.field-exclusions{grid-column:1/-1}.field-exclusions input{min-height:50px}
+.field-extra{grid-column:1/-1}.field-extra input{min-height:50px}
 input,select{width:100%;min-height:50px;border-radius:12px;border:1px solid var(--line);padding:12px 12px;background:white;color:var(--ink);font-size:16px;outline:none}
 input:focus,select:focus{border-color:#3a8161;box-shadow:0 0 0 3px #deeee1}
 .hint{font-size:12px;color:var(--muted);line-height:1.65;margin:14px 0 0}.limit{font-size:12px;margin-top:10px;color:var(--muted)}
@@ -45,14 +45,15 @@ input:focus,select:focus{border-color:#3a8161;box-shadow:0 0 0 3px #deeee1}
 <body>
 <main class="page">
   <div class="brand"><div class="brand-name"><span class="brand-logo" aria-hidden="true">◇</span><span>ランダム馬券メーカー</span></div><span class="label">非公式ツール</span></div>
-  <header class="hero"><span class="eyebrow">Quick Pick</span><h1>馬番選びは、運まかせ。</h1><p>出走頭数・券種・点数を選ぶだけ。除外したい馬番も指定でき、ボタンひとつで買い目をランダムに抽選します。</p></header>
+  <header class="hero"><span class="eyebrow">Quick Pick</span><h1>馬番選びは、運まかせ。</h1><p>出走頭数・券種・点数を選ぶだけ。除外する馬番や必ず入れる馬番も指定でき、ボタンひとつで買い目をランダムに抽選します。</p></header>
   <section class="panel" aria-label="抽選の設定">
     <h2>抽選の設定</h2>
     <div class="fields">
       <div class="field"><label for="horses">出走頭数</label><input id="horses" type="number" min="1" max="18" step="1" value="16" inputmode="numeric"></div>
       <div class="field"><label for="bet">券種</label><select id="bet"><option value="trio">3連複</option><option value="trifecta">3連単</option><option value="quinella">馬連</option><option value="exacta">馬単</option><option value="wide">ワイド</option><option value="win">単勝</option><option value="place">複勝</option></select></div>
       <div class="field"><label for="points">点数</label><input id="points" type="number" min="1" max="255" step="1" value="5" inputmode="numeric"></div>
-      <div class="field field-exclusions"><label for="exclude">除外番号（任意）</label><input id="exclude" type="text" inputmode="text" placeholder="例：3, 7, 12" autocomplete="off" aria-describedby="exclude-hint"><p id="exclude-hint" class="hint">抽選したくない馬番をカンマ・空白・読点で区切って入力してください。</p></div>
+      <div class="field field-extra"><label for="exclude">除外番号（任意）</label><input id="exclude" type="text" inputmode="text" placeholder="例：3, 7, 12" autocomplete="off" aria-describedby="exclude-hint"><p id="exclude-hint" class="hint">抽選したくない馬番をカンマ・空白・読点で区切って入力してください。</p></div>
+      <div class="field field-extra"><label for="required">必ず入れる馬番（任意）</label><input id="required" type="text" inputmode="text" placeholder="例：5, 8" autocomplete="off" aria-describedby="required-hint"><p id="required-hint" class="hint">指定した馬番をすべての買い目に含めます。複数指定はカンマ・空白・読点で区切ってください。馬単・3連単では着順は固定されません。</p></div>
     </div>
     <div class="limit" id="limit" aria-live="polite"></div>
     <button type="button" id="generate" class="btn btn-primary">🎲　ランダムに選ぶ</button>
@@ -65,7 +66,7 @@ input:focus,select:focus{border-color:#3a8161;box-shadow:0 0 0 3px #deeee1}
     <div id="actions" class="actions hidden"><button id="copy" class="btn btn-secondary" type="button">結果をコピー</button><button id="redraw" class="btn btn-secondary" type="button">もう一度抽選</button></div>
     <div id="status" class="status" aria-live="polite"></div>
   </section>
-  <p class="foot">馬番は1〜出走頭数のうち除外番号を除いた馬からランダムに選び、同一の買い目は重複しません。馬単・3連単では着順を区別します。結果は購入の参考用です。このツールは馬券の購入、即PATへの接続・送信を行いません。出馬表・取消馬などはご自身でご確認ください。JRA公式のクイックピックとは異なる独自の抽選です。20歳未満の方は馬券を購入できません。</p>
+  <p class="foot">馬番は1〜出走頭数のうち除外番号を除いた馬からランダムに選び、必ず入れる馬番はすべての買い目に含めます。同一の買い目は重複しません。馬単・3連単では着順を区別します。結果は購入の参考用です。このツールは馬券の購入、即PATへの接続・送信を行いません。出馬表・取消馬などはご自身でご確認ください。JRA公式のクイックピックとは異なる独自の抽選です。20歳未満の方は馬券を購入できません。</p>
 </main>
 <script>
 'use strict';
@@ -83,18 +84,37 @@ input:focus,select:focus{border-color:#3a8161;box-shadow:0 0 0 3px #deeee1}
     if(!raw || !Number.isInteger(n) || n<min || n>max) throw new Error(`${name}は${min}〜${max}の整数を指定してください。`);
     return n;
   }
-  function availableHorses(n) {
-    const raw=$('exclude').value.trim();
-    if(!raw) return Array.from({length:n},(_,i)=>i+1);
+  function parseHorseNumbers(id, name, n) {
+    const raw=$(id).value.trim();
+    if(!raw) return new Set();
     const parts=raw.split(/[,，、\s]+/).filter(Boolean);
-    const excluded=new Set();
+    const nums=new Set();
     for(const part of parts) {
-      if(!/^\d+$/.test(part)) throw new Error(`除外番号「${part}」を確認してください。数字を区切って入力してください。`);
+      if(!/^\d+$/.test(part)) throw new Error(`${name}「${part}」を確認してください。数字を区切って入力してください。`);
       const number=Number(part);
-      if(!Number.isSafeInteger(number)||number<1||number>n) throw new Error(`除外番号は1〜${n}の範囲で入力してください。`);
-      excluded.add(number);
+      if(!Number.isSafeInteger(number)||number<1||number>n) throw new Error(`${name}は1〜${n}の範囲で入力してください。`);
+      nums.add(number);
     }
-    return Array.from({length:n},(_,i)=>i+1).filter(num=>!excluded.has(num));
+    return nums;
+  }
+  function conditions(n, type) {
+    const excluded=parseHorseNumbers('exclude','除外番号',n);
+    const required=parseHorseNumbers('required','必須馬番',n);
+    for(const num of required) {
+      if(excluded.has(num)) throw new Error(`${num}番が「除外番号」と「必ず入れる馬番」の両方に指定されています。`);
+    }
+    if(required.size>type.size) throw new Error(`${type.name}の1点には${type.size}頭しか入れられません。必須馬番を${type.size}頭以内にしてください。`);
+    const available=Array.from({length:n},(_,i)=>i+1).filter(num=>!excluded.has(num));
+    const remaining=type.size-required.size;
+    const optional=available.length-required.size;
+    const choose=totalCount(optional,remaining,false);
+    const count=type.ordered ? choose*factorial(type.size) : choose;
+    return {available,required,count};
+  }
+  function factorial(n) {
+    let result=1;
+    for(let i=2;i<=n;i++) result*=i;
+    return result;
   }
   function totalCount(n, k, ordered) {
     if(n<k) return 0;
@@ -106,9 +126,10 @@ input:focus,select:focus{border-color:#3a8161;box-shadow:0 0 0 3px #deeee1}
     const n=Number($('horses').value),type=types[$('bet').value];
     if(!Number.isInteger(n)||n<1||n>18){$('limit').textContent='出走頭数は1〜18頭から選んでください。';return}
     try {
-      const available=availableHorses(n);
-      const count=totalCount(available.length,type.size,type.ordered);
-      $('limit').textContent=count?`抽選対象：${available.length}頭／最大${count.toLocaleString('ja-JP')}通りの買い目があります。`:`除外後の馬が${available.length}頭です。${type.name}には最低${type.size}頭が必要です。`;
+      const {available,required,count}=conditions(n,type);
+      $('limit').textContent=count
+        ? `抽選対象：${available.length}頭／必須：${required.size}頭／条件に合う買い目：最大${count.toLocaleString('ja-JP')}通り`
+        : `条件に合う買い目はありません。${type.name}には${type.size}頭必要です（抽選対象：${available.length}頭）。`;
     } catch(e) {$('limit').textContent=e.message;}
   }
   function randomInt(max) {
@@ -139,11 +160,10 @@ input:focus,select:focus{border-color:#3a8161;box-shadow:0 0 0 3px #deeee1}
     clear();
     try {
       const n=numberField('horses','出走頭数',1,18),p=numberField('points','点数',1,255),type=types[$('bet').value];
-      const available=availableHorses(n);
-      const max=totalCount(available.length,type.size,type.ordered);
-      if(max===0)throw new Error(`除外後の馬は${available.length}頭です。${type.name}を選ぶには最低${type.size}頭が必要です。`);
+      const {available,required,count:max}=conditions(n,type);
+      if(max===0)throw new Error(`この条件では${type.name}の買い目を作れません。除外番号・必須馬番・出走頭数を確認してください。`);
       if(p>max)throw new Error(`この条件では最大${max}点までです。点数を減らしてください。`);
-      const pool=choices(available,type.size,type.ordered);
+      const pool=choices(available,type.size,type.ordered).filter(nums=>[...required].every(h=>nums.includes(h)));
       // Unbiased partial Fisher-Yates shuffle: no duplicate ticket combinations.
       for(let i=0;i<p;i++){const j=i+randomInt(pool.length-i);[pool[i],pool[j]]=[pool[j],pool[i]]}
       drawn=pool.slice(0,p);drawnType=type;
@@ -162,7 +182,7 @@ input:focus,select:focus{border-color:#3a8161;box-shadow:0 0 0 3px #deeee1}
     catch(e){const t=document.createElement('textarea');t.value=txt;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();const ok=document.execCommand('copy');t.remove();$('status').textContent=ok?'抽選結果をコピーしました。':'このブラウザではコピーできません。画面の結果をご確認ください。'}
   }
   $('generate').addEventListener('click',draw);$('redraw').addEventListener('click',draw);$('copy').addEventListener('click',copy);
-  $('horses').addEventListener('input',()=>{updateLimit();clear()});$('bet').addEventListener('change',()=>{updateLimit();clear()});$('points').addEventListener('input',clear);$('exclude').addEventListener('input',()=>{updateLimit();clear()});
+  $('horses').addEventListener('input',()=>{updateLimit();clear()});$('bet').addEventListener('change',()=>{updateLimit();clear()});$('points').addEventListener('input',clear);$('exclude').addEventListener('input',()=>{updateLimit();clear()});$('required').addEventListener('input',()=>{updateLimit();clear()});
   updateLimit();
 })();
 </script>
