@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#17483b">
+<title>ランダム馬券メーカー｜非公式の買い目抽選ツール</title>
+<meta name="description" content="出走頭数・券種・点数・除外番号を指定して、重複しない馬券の買い目をランダムに生成する非公式の無料ツールです。馬券の購入はできません。">
+<style>
+:root{--bg:#f5f7f3;--surface:#ffffff;--ink:#23362e;--muted:#687a70;--forest:#17483b;--forest2:#246451;--line:#dce6de;--pale:#eaf3ec;--error:#ad3434}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
+button,input,select{font:inherit}
+.page{width:min(760px,100%);margin:0 auto;padding:24px 18px 50px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;font-weight:800;letter-spacing:.02em}
+.brand-name{display:flex;align-items:center;gap:10px}.brand-logo{background:var(--forest);color:#fff;display:grid;place-items:center;width:37px;height:37px;border-radius:11px;font-size:19px}
+.label{font-size:11px;color:var(--forest);background:#e6f0e8;border-radius:999px;padding:6px 10px;font-weight:700;white-space:nowrap}
+.hero{padding:26px 28px;border-radius:21px;background:linear-gradient(125deg,#123e32,#25634e);color:#fff;margin-bottom:18px}
+.eyebrow{font-size:11px;letter-spacing:.16em;font-weight:800;color:#c1e3ce;text-transform:uppercase}
+h1{font-size:clamp(23px,5.3vw,33px);line-height:1.4;margin:8px 0 10px;letter-spacing:-.025em}.hero p{font-size:14px;line-height:1.8;color:#e0eee4;margin:0}
+.panel{padding:24px;border-radius:19px;background:var(--surface);border:1px solid #e5ece6;box-shadow:0 8px 28px rgba(20,60,35,.04);margin-bottom:16px}
+h2{font-size:17px;margin:0 0 20px}.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.field label{display:block;font-size:12px;font-weight:750;margin-bottom:8px}
+.field-exclusions{grid-column:1/-1}.field-exclusions input{min-height:50px}
+input,select{width:100%;min-height:50px;border-radius:12px;border:1px solid var(--line);padding:12px 12px;background:white;color:var(--ink);font-size:16px;outline:none}
+input:focus,select:focus{border-color:#3a8161;box-shadow:0 0 0 3px #deeee1}
+.hint{font-size:12px;color:var(--muted);line-height:1.65;margin:14px 0 0}.limit{font-size:12px;margin-top:10px;color:var(--muted)}
+.btn{border:0;border-radius:12px;padding:13px 15px;min-height:49px;font-size:14px;font-weight:800;cursor:pointer}.btn:disabled{cursor:not-allowed;opacity:.5}
+.btn-primary{width:100%;background:var(--forest);color:white;margin-top:22px}.btn-primary:hover{background:var(--forest2)}
+.btn-secondary{background:var(--pale);color:var(--forest);border:1px solid #d6e9db;flex:1}
+.actions{display:flex;gap:10px;margin-top:20px}
+.error{color:var(--error);font-size:13px;font-weight:650;line-height:1.6;margin:10px 0 0;min-height:0}
+.results-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.results-head h2{margin:0}.count{background:var(--pale);color:var(--forest);font-size:13px;padding:7px 11px;border-radius:999px;font-weight:800}
+.empty{border:1px dashed #c7d9cc;border-radius:14px;text-align:center;color:var(--muted);line-height:1.8;font-size:13px;padding:30px 16px}
+.dice{font-size:28px;margin-bottom:8px}.tickets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ticket{display:flex;align-items:center;gap:14px;padding:14px 15px;border-radius:12px;background:#fcfdfb;border:1px solid #e1eae3;min-width:0}
+.index{background:#edf3ed;border-radius:8px;min-width:30px;height:30px;display:grid;place-items:center;font-weight:750;font-size:12px;color:#667c6d;font-variant-numeric:tabular-nums}
+.numbers{font-weight:850;font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:.025em;white-space:nowrap}
+.status{font-size:12px;color:var(--forest);margin-top:11px}.foot{color:#627269;font-size:12px;line-height:1.8;padding:15px 18px;background:#ecf0eb;border-radius:13px}
+.hidden{display:none!important}
+@media(max-width:600px){.page{padding:16px 12px 32px}.hero{padding:24px 21px}.panel{padding:19px}.fields{grid-template-columns:1fr 1fr}.fields .field:first-child{grid-column:1/-1}.tickets{grid-template-columns:1fr}.numbers{font-size:18px}}
+@media(max-width:360px){.brand{font-size:13px}.label{font-size:10px}.ticket{padding:12px}.btn{font-size:12px}}
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="brand"><div class="brand-name"><span class="brand-logo" aria-hidden="true">◇</span><span>ランダム馬券メーカー</span></div><span class="label">非公式ツール</span></div>
+  <header class="hero"><span class="eyebrow">Quick Pick</span><h1>馬番選びは、運まかせ。</h1><p>出走頭数・券種・点数を選ぶだけ。除外したい馬番も指定でき、ボタンひとつで買い目をランダムに抽選します。</p></header>
+  <section class="panel" aria-label="抽選の設定">
+    <h2>抽選の設定</h2>
+    <div class="fields">
+      <div class="field"><label for="horses">出走頭数</label><input id="horses" type="number" min="1" max="18" step="1" value="16" inputmode="numeric"></div>
+      <div class="field"><label for="bet">券種</label><select id="bet"><option value="trio">3連複</option><option value="trifecta">3連単</option><option value="quinella">馬連</option><option value="exacta">馬単</option><option value="wide">ワイド</option><option value="win">単勝</option><option value="place">複勝</option></select></div>
+      <div class="field"><label for="points">点数</label><input id="points" type="number" min="1" max="255" step="1" value="5" inputmode="numeric"></div>
+      <div class="field field-exclusions"><label for="exclude">除外番号（任意）</label><input id="exclude" type="text" inputmode="text" placeholder="例：3, 7, 12" autocomplete="off" aria-describedby="exclude-hint"><p id="exclude-hint" class="hint">抽選したくない馬番をカンマ・空白・読点で区切って入力してください。</p></div>
+    </div>
+    <div class="limit" id="limit" aria-live="polite"></div>
+    <button type="button" id="generate" class="btn btn-primary">🎲　ランダムに選ぶ</button>
+    <p id="error" role="alert" aria-live="polite" class="error"></p>
+  </section>
+  <section class="panel" aria-label="抽選結果">
+    <div class="results-head"><h2>抽選結果</h2><span class="count" id="count">0点</span></div>
+    <div id="empty" class="empty"><div class="dice" aria-hidden="true">🎲</div>設定を選んで「ランダムに選ぶ」を押してください。</div>
+    <div id="tickets" class="tickets hidden" aria-live="polite"></div>
+    <div id="actions" class="actions hidden"><button id="copy" class="btn btn-secondary" type="button">結果をコピー</button><button id="redraw" class="btn btn-secondary" type="button">もう一度抽選</button></div>
+    <div id="status" class="status" aria-live="polite"></div>
+  </section>
+  <p class="foot">馬番は1〜出走頭数のうち除外番号を除いた馬からランダムに選び、同一の買い目は重複しません。馬単・3連単では着順を区別します。結果は購入の参考用です。このツールは馬券の購入、即PATへの接続・送信を行いません。出馬表・取消馬などはご自身でご確認ください。JRA公式のクイックピックとは異なる独自の抽選です。20歳未満の方は馬券を購入できません。</p>
+</main>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  const types = {
+    win: {name:'単勝', size:1, ordered:false}, place:{name:'複勝',size:1,ordered:false},
+    quinella:{name:'馬連',size:2,ordered:false}, wide:{name:'ワイド',size:2,ordered:false},
+    exacta:{name:'馬単',size:2,ordered:true}, trio:{name:'3連複',size:3,ordered:false},
+    trifecta:{name:'3連単',size:3,ordered:true}
+  };
+  let drawn = [], drawnType = null;
+  function numberField(id, name, min, max) {
+    const raw=$(id).value.trim(), n=Number(raw);
+    if(!raw || !Number.isInteger(n) || n<min || n>max) throw new Error(`${name}は${min}〜${max}の整数を指定してください。`);
+    return n;
+  }
+  function availableHorses(n) {
+    const raw=$('exclude').value.trim();
+    if(!raw) return Array.from({length:n},(_,i)=>i+1);
+    const parts=raw.split(/[,，、\s]+/).filter(Boolean);
+    const excluded=new Set();
+    for(const part of parts) {
+      if(!/^\d+$/.test(part)) throw new Error(`除外番号「${part}」を確認してください。数字を区切って入力してください。`);
+      const number=Number(part);
+      if(!Number.isSafeInteger(number)||number<1||number>n) throw new Error(`除外番号は1〜${n}の範囲で入力してください。`);
+      excluded.add(number);
+    }
+    return Array.from({length:n},(_,i)=>i+1).filter(num=>!excluded.has(num));
+  }
+  function totalCount(n, k, ordered) {
+    if(n<k) return 0;
+    let count=1;
+    for(let i=0;i<k;i++) count=count*(n-i)/(ordered?1:(i+1));
+    return Math.round(count);
+  }
+  function updateLimit() {
+    const n=Number($('horses').value),type=types[$('bet').value];
+    if(!Number.isInteger(n)||n<1||n>18){$('limit').textContent='出走頭数は1〜18頭から選んでください。';return}
+    try {
+      const available=availableHorses(n);
+      const count=totalCount(available.length,type.size,type.ordered);
+      $('limit').textContent=count?`抽選対象：${available.length}頭／最大${count.toLocaleString('ja-JP')}通りの買い目があります。`:`除外後の馬が${available.length}頭です。${type.name}には最低${type.size}頭が必要です。`;
+    } catch(e) {$('limit').textContent=e.message;}
+  }
+  function randomInt(max) {
+    if(!Number.isSafeInteger(max)||max<1||max>0x100000000) throw new Error('抽選範囲が不正です。');
+    const ceiling=0x100000000, limit=ceiling-(ceiling%max), slot=new Uint32Array(1);
+    let x; do {crypto.getRandomValues(slot);x=slot[0]} while(x>=limit);
+    return x%max;
+  }
+  function choices(horses,k,ordered) {
+    const n=horses.length,out=[];
+    if(ordered) {
+      function rec(cur, used) {if(cur.length===k){out.push(cur.slice());return}
+        for(const h of horses){if(used.has(h))continue;used.add(h);cur.push(h);rec(cur,used);cur.pop();used.delete(h)}
+      } rec([],new Set());
+    } else {
+      function rec(start,cur){if(cur.length===k){out.push(cur.slice());return}
+        for(let i=start;i<=n-(k-cur.length);i++){cur.push(horses[i]);rec(i+1,cur);cur.pop()}
+      } rec(0,[]);
+    }
+    return out;
+  }
+  function format(nums,type) {return nums.map(n=>String(n).padStart(2,'0')).join(type.ordered?' → ':' － ')}
+  function clear() {
+    drawn=[];drawnType=null;$('tickets').replaceChildren();$('tickets').classList.add('hidden');$('empty').classList.remove('hidden');
+    $('actions').classList.add('hidden');$('count').textContent='0点';$('status').textContent='';$('error').textContent='';
+  }
+  function draw() {
+    clear();
+    try {
+      const n=numberField('horses','出走頭数',1,18),p=numberField('points','点数',1,255),type=types[$('bet').value];
+      const available=availableHorses(n);
+      const max=totalCount(available.length,type.size,type.ordered);
+      if(max===0)throw new Error(`除外後の馬は${available.length}頭です。${type.name}を選ぶには最低${type.size}頭が必要です。`);
+      if(p>max)throw new Error(`この条件では最大${max}点までです。点数を減らしてください。`);
+      const pool=choices(available,type.size,type.ordered);
+      // Unbiased partial Fisher-Yates shuffle: no duplicate ticket combinations.
+      for(let i=0;i<p;i++){const j=i+randomInt(pool.length-i);[pool[i],pool[j]]=[pool[j],pool[i]]}
+      drawn=pool.slice(0,p);drawnType=type;
+      const list=$('tickets');
+      drawn.forEach((nums,i)=>{const card=document.createElement('div');card.className='ticket';
+        const idx=document.createElement('span');idx.className='index';idx.textContent=String(i+1).padStart(2,'0');
+        const num=document.createElement('span');num.className='numbers';num.textContent=format(nums,type);
+        card.append(idx,num);list.appendChild(card)});
+      $('count').textContent=p+'点';$('empty').classList.add('hidden');list.classList.remove('hidden');$('actions').classList.remove('hidden');
+    } catch(e) {$('error').textContent=e.message||'設定を確認してください。'}
+  }
+  async function copy() {
+    if(!drawn.length||!drawnType)return;
+    const txt=[`${drawnType.name} / ${drawn.length}点`,...drawn.map((nums,i)=>`${i+1}. ${format(nums,drawnType)}`)].join('\n');
+    try {await navigator.clipboard.writeText(txt);$('status').textContent='抽選結果をコピーしました。'}
+    catch(e){const t=document.createElement('textarea');t.value=txt;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();const ok=document.execCommand('copy');t.remove();$('status').textContent=ok?'抽選結果をコピーしました。':'このブラウザではコピーできません。画面の結果をご確認ください。'}
+  }
+  $('generate').addEventListener('click',draw);$('redraw').addEventListener('click',draw);$('copy').addEventListener('click',copy);
+  $('horses').addEventListener('input',()=>{updateLimit();clear()});$('bet').addEventListener('change',()=>{updateLimit();clear()});$('points').addEventListener('input',clear);$('exclude').addEventListener('input',()=>{updateLimit();clear()});
+  updateLimit();
+})();
+</script>
+</body>
+</html>
